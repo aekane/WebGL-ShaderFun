@@ -1,11 +1,11 @@
-var scene = new THREE.Scene();
+
+var scene = new THREE.Scene()
 
 camera = new THREE.PerspectiveCamera(75, window.innerWidth/ window.innerHeight, 0.1, 1000);
 camera.position.z = .6;
 
-//{alpha: true}
-var renderer = new THREE.WebGLRenderer(  );
-renderer.setSize( window.innerWidth, window.innerHeight );
+var renderer = new THREE.WebGLRenderer();
+renderer.setSize( window.innerWidth, window.innerHeight);
 document.body.appendChild( renderer.domElement );
 
 let smooth = .2;
@@ -27,12 +27,12 @@ window.wallpaperPropertyListener = {
 	}
 }
 
-let uniforms = {};
+let uniforms = {}
 
-addPlane();
+addPlane()
 
 var startTime = Date.now();
-animationLoop();
+animationLoop()
 
 
 function addPlane() {
@@ -76,7 +76,7 @@ function fragmentShader(){
         #define MAX_DIST 100.
         #define SURF_DIST .001
 
-		uniform float smooth;
+        uniform float smooth;
         uniform float time;
         varying vec3 camerPosition;
 
@@ -87,34 +87,33 @@ function fragmentShader(){
             return mix(b, a, h) - t * h * (1. - h);
         }
 
-        vec3 rotz(vec3 pos, float a) {
-            mat3 rotation = mat3(cos(a), -sin(a), 0, sin(a), cos(a), 0, 0, 0, 1);
+        vec3 roty(vec3 pos, float a) {
+            mat3 rotation = mat3(cos(a), 0, sin(a), 0, 1, 0, -sin(a), 0, cos(a));
 
-            vec3 r = vec3(rotation * pos);
-
-            return r;
+            return vec3(rotation * pos);
         }
 
         float GetDist (vec3 p) {
-            float t = (time * .01);
-            //float sinF = (sin(sin(5. * t) + sin(10. * t) + sin(4. * 3.1415 * t)));
+            float t = time * .007;
 
-            vec3 d1Pos = vec3(sin(t) * .2, 0, -cos(t + 3.1415));
+            //Medium Sphere
+            float k = 5. / 7.;
+            vec3 rose = vec3(cos(k * t) * cos(t), cos(k * t) * sin(t), 0.);
+            float d1 = length(p + rose) - .5;
             
-            vec3 d2Pos = vec3(sin(t) * 1.2, 0, cos(t + 3.1415) * .8);
-            d2Pos = rotz(d2Pos, time * .0004);
-            
-            vec3 d3Pos = vec3(-sin(t + 2.) * 1.1, 0, cos(t + 5.1415) * .7);
-            d3Pos = rotz(d3Pos, -time * .0004);
+            //Biggest Sphere
+            vec3 figEight = vec3(sin(t) * 1.5, sin(t) * cos(t), 0.);
+            float d2 = length(p + roty(figEight * .4, t * 0.1)) - .75;
 
+            //Smallest Sphere
+            k = 6.;
+            float tAdj = .3;
+            rose = vec3(cos(k * t * tAdj) * cos(t * tAdj), - cos(k * t * tAdj) * sin(t * tAdj), 0.);
+            float d3 = length(p + roty(rose, t * .1)) - .25;
 
-            float d1 = length(p + d1Pos) - .75;
-            float d2 = length(p + d2Pos) - .5;
-            float d3 = length(p + d3Pos) - .25;
-            
             float d = smin(d1, d2, smooth);
             d = smin(d, d3, smooth);
-            return d;
+            return d; //length(max(abs(roty(p, t)) - .5, 0.));
         }
 
         float RayMarch (vec3 origin, vec3 dir) {
@@ -167,8 +166,8 @@ function animationLoop() {
     var elapsedMilliseconds = Date.now() - startTime;
 	var elapsedSeconds = elapsedMilliseconds / 1000.;
     uniforms.time.value = 60. * elapsedSeconds;
-	
-	uniforms.smooth = {type: 'float', value: smooth}
-    
-    requestAnimationFrame(animationLoop)
+
+	uniforms.smooth = {type: 'float', value: smooth};
+
+    requestAnimationFrame(animationLoop);
 }
